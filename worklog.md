@@ -92,3 +92,18 @@ Work Log:
 Stage Summary:
 - Local main fully re-authored; once force-pushed, Vercel can identify the commit author and deploy.
 - Deploy needs TURSO_DATABASE_URL + TURSO_AUTH_TOKEN env vars set in Vercel project settings.
+
+---
+Task ID: 6
+Agent: main (Super Z)
+Task: Publish re-authored history to github.com/picasocode/gym with user-provided PAT.
+
+Work Log:
+- Committed pending worklog entry first so remote receives complete state.
+- Verified token via authenticated ls-remote; remote tip was 9be9e3d (z@container author era).
+- git push --force main:main (history intentionally rewritten: all commits re-authored to picasocode <picasocode@gmail.com>).
+- Confirmed remote refs/heads/main = new tip; synced origin/main tracking ref via authenticated fetch (no token stored in git config).
+
+Stage Summary:
+- github.com/picasocode/gym main now fully authored by picasocode — Vercel author check will pass.
+- Remaining for deploy: set TURSO_DATABASE_URL + TURSO_AUTH_TOKEN in Vercel project env, then redeploy.
