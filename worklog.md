@@ -78,3 +78,17 @@ Work Log:
 Stage Summary:
 - Turso primary + local SQLite fallback verified end-to-end (API level + browser level); /api/health exposes active backend for ops/Vercel debugging.
 - Repo identity now picasocode <picasocode@gmail.com>; main pushed to github.com/picasocode/gym.
+
+---
+Task ID: 5
+Agent: main (Super Z)
+Task: Fix Vercel deployment rejection — commit author email z@container invalid.
+
+Work Log:
+- Vercel reported "commit author email (z@container) is not valid"; verified 5 of 6 commits on main were authored+committed as sandbox default "Z User <z@container>", including pushed tip 9be9e3d.
+- Rewrote full local history via git filter-branch env-filter: all commits now author+committer "picasocode <picasocode@gmail.com>"; messages/dates/content untouched. New tip 505b86e (was f168e3d).
+- Push requires force (history rewrite) + credentials; no PAT stored in sandbox (old one exposed in chat, must be regenerated) — push left to user or pending fresh token.
+
+Stage Summary:
+- Local main fully re-authored; once force-pushed, Vercel can identify the commit author and deploy.
+- Deploy needs TURSO_DATABASE_URL + TURSO_AUTH_TOKEN env vars set in Vercel project settings.
