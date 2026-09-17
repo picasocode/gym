@@ -39,3 +39,42 @@ Work Log:
 
 Stage Summary:
 - GitHub push complete; local remote config stores no token; runtime data (.env, db) excluded from repo.
+
+---
+Task ID: 3
+Agent: main (Super Z)
+Task: Migrate app database from local SQLite to user-provided Turso (libSQL) cloud DB.
+
+Work Log:
+- Installed @prisma/adapter-libsql@6.19.2 + @libsql/client@0.18.0; enabled driverAdapters in Prisma schema and regenerated client.
+- Rewrote src/lib/db.ts: PrismaLibSQL adapter when TURSO_DATABASE_URL/TURSO_AUTH_TOKEN set, local SQLite fallback otherwise; globalThis cache keyed by connection config so dev hot-reloads rebuild the client.
+- Fixed adapter API mismatch (6.19.2 constructor takes libSQL Config object, not a Client instance) that caused URL_INVALID 'undefined'.
+- scripts/apply-schema-turso.ts: generates DDL via `prisma migrate diff --from-empty`, rewrites to IF NOT EXISTS, applies via executeMultiple. Ran: 4 tables created (was empty).
+- Refactored seed.ts to import shared db client; seeded Turso: 93 exercises / 3 athletes / 1 week / 36 completions; verified counts via direct libsql query.
+- Verified live app on Turso: /api/state returns Turso data; POST /api/completions write (Jordan, Friday Dead hang) confirmed persisted in Turso via direct query, then reverted. UI renders correctly (screenshot shot-turso.png). Lint clean, dev.log clean.
+- README: added Database section (env vars, schema-apply + seed scripts, Vercel integration note).
+- Committed 9be9e3d and pushed to GitHub by inline-token URL (remote config stays token-free); synced origin/main tracking ref.
+
+Stage Summary:
+- App now runs entirely on Turso cloud DB in sandbox; local SQLite only as fallback.
+- Secrets live only in gitignored .env; repo pushed without credentials.
+- For Vercel: TURSO_DATABASE_URL + TURSO_AUTH_TOKEN env vars (auto-injected if DB came from Vercel-Turso integration).
+
+---
+Task ID: 4
+Agent: main (Super Z)
+Task: Verify and finish the Turso (libSQL) switch — confirm primary/fallback backends, E2E proof, git identity, push.
+
+Work Log:
+- Found Task 3 implementation intact (schema driverAdapters, db.ts adapter+fallback, .env Turso vars, commit 9be9e3d pushed); "Blocked" state was missing end-to-end verification only.
+- Added currentDbBackend() to src/lib/db.ts and new GET /api/health route reporting { ok, backend: "turso"|"sqlite", latencyMs } with SELECT 1 ping.
+- scripts/verify-turso.ts: direct @libsql/client check — Turso reachable, 4 tables, 93 exercises / 3 athletes / 1 week (2026-W38) / 37 completions.
+- Health endpoint live: {"ok":true,"backend":"turso","latencyMs":576} — app confirmed running on Turso cloud.
+- Fallback test: commented out TURSO_ vars in .env (Next dev auto-reload) → /api/health {"ok":true,"backend":"sqlite","latencyMs":2} and /api/state served local SQLite data; restored .env → back to {"backend":"turso","latencyMs":705}. Both backends verified, hot-switch works without restart.
+- Browser E2E (agent-browser): page renders Turso data (Alex 28% / Sam 11% / Jordan 0%, Mon 18/18, Tue 8/19); toggled Thursday "Walk / bike" → row persisted in Turso (done=1); reload → UI restored checked state from cloud; untoggled → done=0, UI unchecked. 0 console errors.
+- Set git user.email picasocode@gmail.com + user.name picasocode (user request); rewrote the two sandbox auto-commits (Z User) into one commit under the new identity and pushed.
+- lint clean, dev.log clean, README Database section already documents Turso env vars + fallback.
+
+Stage Summary:
+- Turso primary + local SQLite fallback verified end-to-end (API level + browser level); /api/health exposes active backend for ops/Vercel debugging.
+- Repo identity now picasocode <picasocode@gmail.com>; main pushed to github.com/picasocode/gym.

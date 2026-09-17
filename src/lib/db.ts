@@ -19,6 +19,16 @@ const globalForPrisma = globalThis as unknown as {
   __deathProtocolPrisma?: CacheShape
 }
 
+/**
+ * Which backend the current connection config resolves to.
+ * Read per-call (not at import time) so dev env reloads are reflected.
+ */
+export function currentDbBackend(): 'turso' | 'sqlite' {
+  return process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN
+    ? 'turso'
+    : 'sqlite'
+}
+
 function createDbClient(): PrismaClient {
   const tursoUrl = process.env.TURSO_DATABASE_URL
   const tursoToken = process.env.TURSO_AUTH_TOKEN
