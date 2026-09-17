@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { labelOf, mondayOfKey, weekKeyOf } from '../src/lib/week'
+import { db } from '../src/lib/db'
 
 type ExerciseSeed = {
   day: string
@@ -13,8 +13,6 @@ type ExerciseSeed = {
   focus: string
   order: number
 }
-
-const db = new PrismaClient()
 
 async function main() {
   const raw = JSON.parse(

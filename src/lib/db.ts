@@ -1,13 +1,49 @@
 import { PrismaClient } from '@prisma/client'
+import { PrismaLibSQL } from '@prisma/adapter-libsql'
+
+/**
+ * Database client with two backends:
+ *
+ * - If TURSO_DATABASE_URL + TURSO_AUTH_TOKEN are set, all traffic goes to the
+ *   Turso (libSQL) cloud database through Prisma's libSQL driver adapter.
+ * - Otherwise it falls back to the local SQLite file from DATABASE_URL.
+ *
+ * The client is cached on globalThis keyed by its connection config, so Next.js
+ * dev hot-reloads rebuild the client when the backend env vars change instead of
+ * silently reusing a stale connection.
+ */
+
+type CacheShape = { key: string; client: PrismaClient }
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+  __deathProtocolPrisma?: CacheShape
 }
 
-export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+function createDbClient(): PrismaClient {
+  const tursoUrl = process.env.TURSO_DATABASE_URL
+  const tursoToken = process.env.TURSO_AUTH_TOKEN
+
+  if (tursoUrl && tursoToken) {
+    // PrismaLibSQL takes the libSQL client config directly and manages
+    // the underlying @libsql/client connection itself.
+    const adapter = new PrismaLibSQL({ url: tursoUrl, authToken: tursoToken })
+    return new PrismaClient({ adapter })
+  }
+
+  return new PrismaClient({
     log: ['query'],
   })
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+function getClient(): PrismaClient {
+  const key = `${process.env.TURSO_DATABASE_URL ?? ''}|${process.env.DATABASE_URL ?? 'local'}`
+
+  const cached = globalForPrisma.__deathProtocolPrisma
+  if (cached && cached.key === key) return cached.client
+
+  const client = createDbClient()
+  globalForPrisma.__deathProtocolPrisma = { key, client }
+  return client
+}
+
+export const db = getClient()
