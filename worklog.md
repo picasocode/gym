@@ -24,3 +24,18 @@ Stage Summary:
 - Deliverable: multi-user Death Protocol tracking dashboard at / (Next.js 16, port 3000).
 - Data model supports weekly history, arbitrary athletes, per-exercise completion per athlete per week.
 - Scripts kept for iteration: scripts/extract_protocol.py, scripts/protocol_data.json, scripts/seed.ts.
+
+---
+Task ID: 2
+Agent: main (Super Z)
+Task: Push project to GitHub repo picasocode/gym (user-provided PAT).
+
+Work Log:
+- Found repo already git-initialized on main with 2 scaffold commits; .env, db/custom.db, .zscripts/dev.pid, scripts/shot-*.png were tracked.
+- Untracked .env, db/custom.db, dev.pid, screenshots; added /db/, *.pid, scripts/*.png to .gitignore.
+- Created README.md (# gym + project description + run instructions).
+- Committed "first commit" (d77f4e4), pushed to https://github.com/picasocode/gym.git main with user PAT via temporary authenticated remote URL.
+- Reset origin URL to token-free form; verified via authenticated ls-remote + GitHub API that repo exists (private: true) and main points to d77f4e4.
+
+Stage Summary:
+- GitHub push complete; local remote config stores no token; runtime data (.env, db) excluded from repo.
