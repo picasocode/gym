@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// A person on the crew running the Death Protocol.
+model Athlete {
+  id          String       @id @default(cuid())
+  name        String
+  color       String       @default("#E4572E") // chip color
+  createdAt   DateTime     @default(now())
+  completions Completion[]
+}
+
+// One row from the Weekly Protocol sheet (93 rows, Mon-Fri).
+model Exercise {
+  id          String       @id @default(cuid())
+  day         String // Monday..Friday
+  block       String // Warm-up, Mobility, Strength, Isometric, ...
+  name        String
+  sets        String
+  reps        String
+  rest        String
+  focus       String
+  order       Int // original row order in the sheet
+  completions Completion[]
+
+  @@unique([day, block, name])
+}
+
+// A tracking week (Monday-based ISO week).
+model Week {
+  id          String       @id @default(cuid())
+  key         String       @unique // e.g. "2026-W38"
+  startsAt    DateTime // Monday date
+  label       String // e.g. "Sep 14 – Sep 20"
+  completions Completion[]
+}
+
+// One athlete x one exercise x one week: done or not.
+model Completion {
+  id         String    @id @default(cuid())
+  athleteId  String
+  athlete    Athlete   @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise  @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  weekId     String
+  week       Week      @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  done       Boolean   @default(false)
+  doneAt     DateTime?
+
+  @@unique([athleteId, exerciseId, weekId])
+}
